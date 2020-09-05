@@ -1,5 +1,5 @@
-import { getRepository } from "typeorm";
-import bcryptjs, { hash, compare } from "bcryptjs";
+import { getRepository, Not } from "typeorm";
+import { hash, compare } from "bcryptjs";
 import { sign } from "jsonwebtoken";
 
 import User from "../database/entities/Users";
@@ -36,11 +36,19 @@ export default class UserService {
     password,
   }: CreateUserProps): Promise<User> {
     const userRepository = getRepository(User);
+    const emailAlreadyExists = await userRepository.findOne({
+      where: { email },
+    });
+
+    if (emailAlreadyExists) {
+      throw new AppError("Este e-mail já está sendo utilizado.");
+    }
+
     const user = new User();
 
     user.name = name;
     user.email = email;
-    user.password = await bcryptjs.hash(password, 8);
+    user.password = await hash(password, 8);
 
     userRepository.create(user);
     await userRepository.save(user);
@@ -54,6 +62,15 @@ export default class UserService {
     email,
   }: UpdateUserProps): Promise<User> {
     const userRepository = getRepository(User);
+
+    const emailAlreadyExists = await userRepository.findOne({
+      where: { email, id: Not(user_id) },
+    });
+
+    if (emailAlreadyExists) {
+      throw new AppError("Este e-mail já está sendo utilizado.");
+    }
+
     let user = await userRepository.findOne(user_id);
 
     if (!user) {
