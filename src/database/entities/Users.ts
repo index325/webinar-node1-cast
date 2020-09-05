@@ -19,15 +19,6 @@ import {
   
     @Column()
     password: string;
-
-    @Column()
-    city: string;
-
-    @Column()
-    state: string;
-  
-    @Column()
-    avatar: string;
   
     @CreateDateColumn()
     created_at: Date;
