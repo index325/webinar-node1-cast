@@ -3,23 +3,27 @@ import { hash, compare } from "bcryptjs";
 import { sign } from "jsonwebtoken";
 
 import User from "../database/entities/Users";
+import UserDrinks from "../database/entities/UserDrinks";
+
 import AppError from "../errors/AppError";
 import authConfig from "../config/auth";
 
-interface CreateUserProps {
+interface ICreateUserProps {
   name: string;
   email: string;
   password: string;
+  kilograms: number;
 }
 
-interface UpdateUserProps {
+interface IUpdateUserProps {
   user_id: string;
   name: string;
   email: string;
   password: string;
+  kilograms: number;
 }
 
-interface AuthenticationProps {
+interface IAuthenticationProps {
   email: string;
   password: string;
 }
@@ -29,12 +33,20 @@ interface IAuthenticationResponse {
   token: string;
 }
 
+interface IDetailUser {
+  user: User;
+  quantityThatYouNeedToDrink: number;
+  quantityThatYouDrinked: number;
+  needToDrinkMore: boolean;
+}
+
 export default class UserService {
   public async createUser({
     name,
     email,
     password,
-  }: CreateUserProps): Promise<User> {
+    kilograms,
+  }: ICreateUserProps): Promise<User> {
     const userRepository = getRepository(User);
     const emailAlreadyExists = await userRepository.findOne({
       where: { email },
@@ -49,6 +61,7 @@ export default class UserService {
     user.name = name;
     user.email = email;
     user.password = await hash(password, 8);
+    user.kilograms = kilograms;
 
     userRepository.create(user);
     await userRepository.save(user);
@@ -60,7 +73,8 @@ export default class UserService {
     user_id,
     name,
     email,
-  }: UpdateUserProps): Promise<User> {
+    kilograms,
+  }: IUpdateUserProps): Promise<User> {
     const userRepository = getRepository(User);
 
     const emailAlreadyExists = await userRepository.findOne({
@@ -79,16 +93,46 @@ export default class UserService {
 
     user.name = name;
     user.email = email;
+    user.kilograms = kilograms;
 
     user = await userRepository.save(user);
 
     return user;
   }
 
+  public async detailUser(user_id: string): Promise<IDetailUser> {
+    const userRepository = getRepository(User);
+    const drinksRepository = getRepository(UserDrinks);
+    const user = await userRepository.findOne(user_id);
+
+    let { sum } = await drinksRepository
+      .createQueryBuilder("user_drinks")
+      .select("SUM(user_drinks.quantity)", "sum")
+      .where("user_drinks.user_id = :id", { id: user_id })
+      .getRawOne();
+
+    sum = sum || 0;
+
+    if (!user) {
+      throw new AppError("Usuário não encontrado");
+    }
+
+    const quantityThatYouNeedToDrink = user.kilograms * 35;
+
+    const detailFormated: IDetailUser = {
+      user: user,
+      quantityThatYouDrinked: sum,
+      quantityThatYouNeedToDrink,
+      needToDrinkMore: quantityThatYouNeedToDrink >= sum ? true : false,
+    };
+
+    return detailFormated;
+  }
+
   public async authenticateUser({
     password,
     email,
-  }: AuthenticationProps): Promise<IAuthenticationResponse> {
+  }: IAuthenticationProps): Promise<IAuthenticationResponse> {
     const userRepository = getRepository(User);
 
     const user = await userRepository.findOne({

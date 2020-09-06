@@ -6,6 +6,8 @@ import JWT from "../middlewares/JWT";
 const usersRouter = Router();
 const usersController = new UsersController();
 
+usersRouter.get("/", JWT, usersController.detail);
+
 usersRouter.post("/", usersController.create);
 
 usersRouter.put("/", JWT, usersController.update);

@@ -8,11 +8,13 @@ export default class UsersController {
 
     const userService = new UserService();
 
-    const user = await userService.authenticateUser({
+    const auth = await userService.authenticateUser({
       email,
       password,
     });
 
-    return response.json(user);
+    delete auth.user.password
+
+    return response.json(auth);
   }
 }

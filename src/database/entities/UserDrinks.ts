@@ -1,27 +1,29 @@
 import {
   Entity,
   Column,
+  ManyToOne,
+  JoinColumn,
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
 } from "typeorm";
 
-@Entity("users")
-class Users {
+import Users from "./Users";
+
+@Entity("user_drinks")
+class UsersDrink {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column()
-  name: string;
+  user_id: string;
+
+  @ManyToOne(() => Users)
+  @JoinColumn({ name: "user_id" })
+  user: Users;
 
   @Column()
-  email: string;
-
-  @Column()
-  password: string;
-
-  @Column()
-  kilograms: number;
+  quantity: number;
 
   @CreateDateColumn()
   created_at: Date;
@@ -30,4 +32,4 @@ class Users {
   updated_at: Date;
 }
 
-export default Users;
+export default UsersDrink;
