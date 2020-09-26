@@ -109,6 +109,9 @@ export default class UserService {
       .createQueryBuilder("user_drinks")
       .select("SUM(user_drinks.quantity)", "sum")
       .where("user_drinks.user_id = :id", { id: user_id })
+      .andWhere(
+        "to_char(user_drinks.created_at, 'yyyy-MM-dd') = to_char(current_date, 'yyyy-MM-dd')"
+      )
       .getRawOne();
 
     sum = sum || 0;
