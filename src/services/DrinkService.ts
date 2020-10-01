@@ -27,7 +27,7 @@ interface IDeleteDrinkProps {
   drink_id: string;
 }
 
-export default class UserService {
+export default class DrinkService {
   public async createDrink({
     quantity,
     user_id,

@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 
 import DrinkService from "../services/DrinkService";
 
-export default class UsersController {
+export default class DrinkController {
   public async create(request: Request, response: Response): Promise<Response> {
     const { id } = request.user;
     const { quantity } = request.body;
