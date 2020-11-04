@@ -28,6 +28,12 @@ class Users {
 
   @UpdateDateColumn()
   updated_at: Date;
+
+  quantityThatYouNeedToDrink: number;
+
+  quantityThatYouDrinked: number;
+
+  needToDrinkMore: boolean;
 }
 
 export default Users;

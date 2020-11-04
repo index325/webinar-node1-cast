@@ -137,6 +137,7 @@ export default class UserService {
     email,
   }: IAuthenticationProps): Promise<IAuthenticationResponse> {
     const userRepository = getRepository(User);
+    const drinksRepository = getRepository(UserDrinks);
 
     const user = await userRepository.findOne({
       where: { email },
@@ -159,6 +160,27 @@ export default class UserService {
       expiresIn,
     });
 
-    return { user, token };
+    let { sum } = await drinksRepository
+      .createQueryBuilder("user_drinks")
+      .select("SUM(user_drinks.quantity)", "sum")
+      .where("user_drinks.user_id = :id", { id: user.id })
+      .andWhere(
+        "to_char(user_drinks.created_at, 'yyyy-MM-dd') = to_char(current_date, 'yyyy-MM-dd')"
+      )
+      .getRawOne();
+
+    sum = sum || 0;
+
+    const quantityThatYouNeedToDrink = user.kilograms * 35;
+
+    return {
+      user: {
+        ...user,
+        quantityThatYouDrinked: sum,
+        quantityThatYouNeedToDrink,
+        needToDrinkMore: quantityThatYouNeedToDrink >= sum ? true : false,
+      },
+      token,
+    };
   }
 }
